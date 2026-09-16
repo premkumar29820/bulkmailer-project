@@ -1,4 +1,4 @@
- require("dotenv").config();   //load .env file variable into node.js apllication like use port mail,pass with process.env.PORT
+require("dotenv").config();   //load .env file variable into node.js apllication like use port mail,pass with process.env.PORT
 
 const dns = require("dns");  //import dns module for resolve domain name to IP address
 dns.setServers(["8.8.8.8","8.8.4.4", "1.1.1.1"]);   //for set google dns connection because sometime error in mongodb connection with dns
@@ -99,178 +99,150 @@ app.post("/login", (req, res) => {
   });
 });
 
+// app.post("/sendmail", authMiddleware, async (req, res) => {   //sendmail is protected route first run authmiddleware if its correct then execute mail sending code
+//   const { subject, body, recipients } = req.body;
 
+//   if (
+//     !subject ||
+//     !body ||
+//     !Array.isArray(recipients) ||
+//     recipients.length === 0
+//   ) {
+//     return res.status(400).json({
+//       success: false,
+//       message: "Subject, body and recipients are required"
+//     })
+//   }
+
+//   try {
+//     await connectDB()
+//     await transporter.sendMail({   //send mail by nodemailer
+//       from: process.env.EMAIL_USER,
+//       to: recipients,
+//       subject: subject,
+//       text: body
+//     })
+
+//     await Email.create({   //if mail send successfully it will store in mongodb
+//       subject: subject,
+//       body: body,
+//       recipients: recipients,
+//       status: "success"   //sentAt time automatically create by mongodb
+//     })
+
+//     res.json({
+//       success: true,
+//       message: "Mail sent successfully"   //success msg for frontend
+//     })
+//   } catch (error) {
+//     console.log("Email sending error:", error);
+
+//     try {
+//       await Email.create({
+//         subject: subject,
+//         body: body,
+//         recipients: recipients,
+//         status: "failed"   //try to save failed mail attempt in mongodb
+//       });
+//     } catch (dbError) {   //server error for frontend
+//       console.log("Database save error:", dbError);
+//     }
+
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to send mail"    //for frontend alert
+//     })
+//   }
 // })
-app.post("/sendmail", authMiddleware, async (req, res) => {
-  try {
-    await connectDB();
+app.post("/sendmail", authMiddleware, async (req, res) => {   //sendmail is protected route first run authmiddleware if its correct then execute mail sending code 
+  const { subject, body, recipients } = req.body; 
+ 
+  if ( 
+    !subject || 
+    !body || 
+    !Array.isArray(recipients) || 
+    recipients.length === 0 
+  ) { 
+    return res.status(400).json({ 
+      success: false, 
+      message: "Subject, body and recipients are required" 
+    }) 
+  } 
+ 
+  try { 
+    await connectDB() 
+    await transporter.sendMail({   //send mail by nodemailer 
+      from: process.env.EMAIL_USER, 
+      to: recipients, 
+      subject: subject, 
+      text: body 
+    }) 
+ 
+    await Email.create({   //if mail send successfully it will store in mongodb 
+      subject: subject, 
+      body: body, 
+      recipients: recipients, 
+      status: "success"   //sentAt time automatically create by mongodb 
+    }) 
+ 
+    return res.status(200).json({ 
+      success: true, 
+      message: "Mail sent successfully"   //success msg for frontend 
+    }) 
+  } catch (error) { 
+    console.log("Email sending error:", error); 
 
-    const { subject, body, recipients } = req.body;
+    return res.status(500).json({ 
+      success: false, 
+      message: "Failed to send mail"    //for frontend alert 
+    }) 
+  } 
+})
 
-    if (!subject?.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "Subject is required",
-      });
-    }
+app.get("/emails", authMiddleware, async (req, res) => {   //history fetch api
+    
+    try {
+    await connectDB()
+    const emails = await Email.find().sort({   //fetch all mail records in mongodb
+      sentAt: -1    //means latest mail-> old mail
+    })
 
-    if (!body?.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "Message is required",
-      });
-    }
-
-    if (
-      !Array.isArray(recipients) ||
-      recipients.length === 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Recipients are required",
-      });
-    }
-
-    const successfulEmails = [];
-    const failedEmails = [];
-
-    // Send one by one so we know exactly
-    // which recipients succeeded/failed.
-    for (const email of recipients) {
-      try {
-        await transporter.sendMail({
-          from: process.env.EMAIL_USER,
-          to: email,
-          subject: subject,
-          text: body,
-        });
-
-        successfulEmails.push(email);
-      } catch (error) {
-        console.log(
-          `Failed to send to ${email}:`,
-          error.message
-        );
-
-        failedEmails.push(email);
-      }
-    }
-
-    // ------------------------------------------------
-    // HISTORY STATUS
-    // ------------------------------------------------
-    let campaignStatus = "Failed";
-
-    if (
-      successfulEmails.length > 0 &&
-      failedEmails.length === 0
-    ) {
-      campaignStatus = "Success";
-    } else if (
-      successfulEmails.length > 0 &&
-      failedEmails.length > 0
-    ) {
-      campaignStatus = "Partial";
-    }
-
-    // ------------------------------------------------
-    // SAVE HISTORY
-    // IMPORTANT:
-    // Save both successful AND failed campaigns
-    // ------------------------------------------------
-    const emailHistory = new Email({
-      subject,
-      body,
-      recipients,
-      successfulEmails,
-      failedEmails,
-      status: campaignStatus,
-    });
-
-    await emailHistory.save();
-
-    return res.status(200).json({
+    res.json({
       success: true,
-      message:
-        failedEmails.length > 0
-          ? "Mail sending completed with some failures"
-          : "Mail sent successfully",
-
-      successfulEmails,
-      failedEmails,
-
-      successCount:
-        successfulEmails.length,
-
-      failedCount:
-        failedEmails.length,
-
-      status: campaignStatus,
+      emails: emails     //history sent to frontend
     });
-
   } catch (error) {
-    console.log(
-      "Send mail error:",
-      error
-    );
+    console.log("History fetch error:", error)
 
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
-      message:
-        error.message ||
-        "Failed to send mail",
+      message: "Failed to fetch email history"
     });
   }
 });
 
+// mongoose
+//   .connect(process.env.MONGO_URI)
+//   .then(() => {
+//     console.log("MongoDB connected successfully");
 
-// DELETE INDIVIDUAL EMAIL HISTORY
-app.delete("/emails/:id", authMiddleware, async (req, res) => {
-  try {
-    await connectDB();
+//     app.listen(process.env.PORT || 3000, () => {
+//       console.log(
+//         `Server running on port ${process.env.PORT || 3000}`
+//       );
+//     });
+//   })
+//   .catch((error) => {
+//     console.log("MongoDB connection failed")
+//     console.log(error)
+//   });
 
-    const { id } = req.params;
+// if (require.main === module) {
+//   app.listen(process.env.PORT || 3000, () => {
+//     console.log(
+//       `Server running on port ${process.env.PORT || 3000}`
+//     );
+//   });
+// }
 
-    const deletedEmail = await Email.findByIdAndDelete(id);
-
-    if (!deletedEmail) {
-      return res.status(404).json({
-        success: false,
-        message: "Email history not found",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Email history deleted successfully",
-    });
-
-  } catch (error) {
-    console.log("Delete history error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to delete email history",
-    });
-  }
-});
-
-
-
-const PORT = process.env.PORT || 10000;
-
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB connected successfully");
-
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  })
-  .catch((error) => {
-    console.error("MongoDB connection failed:");
-    console.error(error);
-  });
-
-
+module.exports = app;
