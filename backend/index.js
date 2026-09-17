@@ -70,8 +70,7 @@ app.get("/", (req, res) => {   //home route this route executed in browser open
   });
 });
 
-// ===== API ROUTES =====
-app.post("/api/login", (req, res) => {
+app.post("/login", (req, res) => {
   const { email, password } = req.body;
   console.log("Frontend mail:",email)
   console.log("frontend password:",password)
@@ -100,8 +99,62 @@ app.post("/api/login", (req, res) => {
   });
 });
 
+// app.post("/sendmail", authMiddleware, async (req, res) => {   //sendmail is protected route first run authmiddleware if its correct then execute mail sending code
+//   const { subject, body, recipients } = req.body;
 
-app.post("/api/sendmail", authMiddleware, async (req, res) => {   //sendmail is protected route first run authmiddleware if its correct then execute mail sending code 
+//   if (
+//     !subject ||
+//     !body ||
+//     !Array.isArray(recipients) ||
+//     recipients.length === 0
+//   ) {
+//     return res.status(400).json({
+//       success: false,
+//       message: "Subject, body and recipients are required"
+//     })
+//   }
+
+//   try {
+//     await connectDB()
+//     await transporter.sendMail({   //send mail by nodemailer
+//       from: process.env.EMAIL_USER,
+//       to: recipients,
+//       subject: subject,
+//       text: body
+//     })
+
+//     await Email.create({   //if mail send successfully it will store in mongodb
+//       subject: subject,
+//       body: body,
+//       recipients: recipients,
+//       status: "success"   //sentAt time automatically create by mongodb
+//     })
+
+//     res.json({
+//       success: true,
+//       message: "Mail sent successfully"   //success msg for frontend
+//     })
+//   } catch (error) {
+//     console.log("Email sending error:", error);
+
+//     try {
+//       await Email.create({
+//         subject: subject,
+//         body: body,
+//         recipients: recipients,
+//         status: "failed"   //try to save failed mail attempt in mongodb
+//       });
+//     } catch (dbError) {   //server error for frontend
+//       console.log("Database save error:", dbError);
+//     }
+
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to send mail"    //for frontend alert
+//     })
+//   }
+// })
+app.post("/sendmail", authMiddleware, async (req, res) => {   //sendmail is protected route first run authmiddleware if its correct then execute mail sending code 
   const { subject, body, recipients } = req.body; 
  
   if ( 
@@ -146,7 +199,7 @@ app.post("/api/sendmail", authMiddleware, async (req, res) => {   //sendmail is 
   } 
 })
 
-app.get("/api/emails", authMiddleware, async (req, res) => {   //history fetch api
+app.get("/emails", authMiddleware, async (req, res) => {   //history fetch api
     
     try {
     await connectDB()
@@ -168,45 +221,28 @@ app.get("/api/emails", authMiddleware, async (req, res) => {   //history fetch a
   }
 });
 
+// mongoose
+//   .connect(process.env.MONGO_URI)
+//   .then(() => {
+//     console.log("MongoDB connected successfully");
 
-// ======================================================
-// START SERVER
-// ======================================================
+//     app.listen(process.env.PORT || 3000, () => {
+//       console.log(
+//         `Server running on port ${process.env.PORT || 3000}`
+//       );
+//     });
+//   })
+//   .catch((error) => {
+//     console.log("MongoDB connection failed")
+//     console.log(error)
+//   });
 
-const PORT =
-  process.env.PORT || 3000;
+// if (require.main === module) {
+//   app.listen(process.env.PORT || 3000, () => {
+//     console.log(
+//       `Server running on port ${process.env.PORT || 3000}`
+//     );
+//   });
+// }
 
-
-async function startServer() {
-
-  try {
-
-    await connectDB();
-
-
-    app.listen(
-      PORT,
-      "0.0.0.0",
-      () => {
-
-        console.log(
-          `Server running on port ${PORT}`
-        );
-
-      }
-    );
-
-  } catch (error) {
-
-    console.error(
-      "MongoDB connection failed:"
-    );
-
-    console.error(error);
-
-    process.exit(1);
-  }
-}
-
-
-startServer(); 
+module.exports = app;
