@@ -12,6 +12,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "agentmail": "^0.5.26",
     "cors": "^2.8.6",
     "dns": "^0.2.2",
     "dotenv": "^17.4.2",

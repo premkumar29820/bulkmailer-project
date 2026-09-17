@@ -25,7 +25,7 @@ dns.setServers([
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const nodemailer = require("nodemailer");
+const { AgentMailClient } = require("agentmail");
 const jwt = require("jsonwebtoken");
 
 const Email = require("./models/Email");
@@ -54,16 +54,11 @@ app.use(express.json());
 
 
 // ======================================================
-// SMTP / GMAIL CONFIGURATION
+// AGENTMAIL CONFIGURATION
 // ======================================================
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
+const agentmail = new AgentMailClient({
+  apiKey: process.env.AGENTMAIL_API_KEY,
 });
 
 
@@ -113,6 +108,7 @@ const authMiddleware = (req, res, next) => {
     next();
 
   } catch (error) {
+
     return res.status(401).json({
       success: false,
       message: "Invalid or expired token",
@@ -138,7 +134,9 @@ app.get("/", (req, res) => {
 // ======================================================
 
 app.post("/login", (req, res) => {
+
   try {
+
     const { email, password } = req.body;
 
     // Do NOT log passwords in production
@@ -147,6 +145,7 @@ app.post("/login", (req, res) => {
       email === process.env.ADMIN_EMAIL &&
       password === process.env.ADMIN_PASSWORD
     ) {
+
       const token = jwt.sign(
         {
           email,
@@ -169,6 +168,7 @@ app.post("/login", (req, res) => {
     });
 
   } catch (error) {
+
     console.error("Login error:", error);
 
     return res.status(500).json({
@@ -205,6 +205,7 @@ app.post(
       // --------------------------------------------------
 
       if (!subject?.trim()) {
+
         return res.status(400).json({
           success: false,
           message: "Subject is required",
@@ -217,6 +218,7 @@ app.post(
       // --------------------------------------------------
 
       if (!body?.trim()) {
+
         return res.status(400).json({
           success: false,
           message: "Message is required",
@@ -232,6 +234,7 @@ app.post(
         !Array.isArray(recipients) ||
         recipients.length === 0
       ) {
+
         return res.status(400).json({
           success: false,
           message: "Recipients are required",
@@ -253,6 +256,7 @@ app.post(
 
 
       if (uniqueRecipients.length === 0) {
+
         return res.status(400).json({
           success: false,
           message: "No valid recipients found",
@@ -277,12 +281,16 @@ app.post(
 
         try {
 
-          await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: subject.trim(),
-            text: body.trim(),
-          });
+          // AgentMail API
+          await agentmail.inboxes.messages.send(
+            "prem-3287@agentmail.to",
+            {
+              to: email,
+              subject: subject.trim(),
+              text: body.trim(),
+              html: `<p>${body.trim()}</p>`,
+            }
+          );
 
 
           successfulEmails.push(email);
@@ -550,6 +558,7 @@ app.use(
       err
     );
 
+
     res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -585,6 +594,7 @@ async function startServer() {
       }
     );
 
+
   } catch (error) {
 
     console.error(
@@ -598,4 +608,4 @@ async function startServer() {
 }
 
 
-startServer(); 
+startServer();
