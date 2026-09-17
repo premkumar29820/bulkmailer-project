@@ -69,7 +69,11 @@ const agentmail = new AgentMailClient({
 let isMongoConnected = false;
 
 async function connectDB() {
-  if (isMongoConnected && mongoose.connection.readyState === 1) {
+
+  if (
+    isMongoConnected &&
+    mongoose.connection.readyState === 1
+  ) {
     return;
   }
 
@@ -86,11 +90,15 @@ async function connectDB() {
 // ======================================================
 
 const authMiddleware = (req, res, next) => {
-  const authHeader = req.headers.authorization;
 
-  const token = authHeader?.split(" ")[1];
+  const authHeader =
+    req.headers.authorization;
+
+  const token =
+    authHeader?.split(" ")[1];
 
   if (!token) {
+
     return res.status(401).json({
       success: false,
       message: "Unauthorized",
@@ -98,6 +106,7 @@ const authMiddleware = (req, res, next) => {
   }
 
   try {
+
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET
@@ -122,10 +131,12 @@ const authMiddleware = (req, res, next) => {
 // ======================================================
 
 app.get("/", (req, res) => {
+
   res.json({
     success: true,
     message: "Bulk Mail Backend Running",
   });
+
 });
 
 
@@ -137,7 +148,11 @@ app.post("/login", (req, res) => {
 
   try {
 
-    const { email, password } = req.body;
+    const {
+      email,
+      password,
+    } = req.body;
+
 
     // Do NOT log passwords in production
 
@@ -156,26 +171,35 @@ app.post("/login", (req, res) => {
         }
       );
 
+
       return res.status(200).json({
         success: true,
         token,
       });
     }
 
+
     return res.status(401).json({
       success: false,
       message: "Invalid email or password",
     });
 
+
   } catch (error) {
 
-    console.error("Login error:", error);
+    console.error(
+      "Login error:",
+      error
+    );
+
 
     return res.status(500).json({
       success: false,
       message: "Login failed",
     });
+
   }
+
 });
 
 
@@ -192,6 +216,7 @@ app.post(
     try {
 
       await connectDB();
+
 
       const {
         subject,
@@ -210,6 +235,7 @@ app.post(
           success: false,
           message: "Subject is required",
         });
+
       }
 
 
@@ -223,6 +249,7 @@ app.post(
           success: false,
           message: "Message is required",
         });
+
       }
 
 
@@ -239,6 +266,7 @@ app.post(
           success: false,
           message: "Recipients are required",
         });
+
       }
 
 
@@ -249,18 +277,23 @@ app.post(
       const uniqueRecipients = [
         ...new Set(
           recipients
-            .map((email) => String(email).trim())
+            .map((email) =>
+              String(email).trim()
+            )
             .filter(Boolean)
         ),
       ];
 
 
-      if (uniqueRecipients.length === 0) {
+      if (
+        uniqueRecipients.length === 0
+      ) {
 
         return res.status(400).json({
           success: false,
           message: "No valid recipients found",
         });
+
       }
 
 
@@ -277,27 +310,53 @@ app.post(
       // SEND EMAILS ONE BY ONE
       // --------------------------------------------------
 
-      for (const email of uniqueRecipients) {
+      for (
+        const email of uniqueRecipients
+      ) {
 
         try {
 
-          // AgentMail API
-          await agentmail.inboxes.messages.send(
-            "prem-3287@agentmail.to",
-            {
-              to: email,
-              subject: subject.trim(),
-              text: body.trim(),
-              html: `<p>${body.trim()}</p>`,
-            }
+          console.log(
+            `Sending mail to: ${email}`
           );
 
 
+          // ==================================================
+          // AGENTMAIL API
+          // ==================================================
+
+          const result =
+            await agentmail.inboxes.messages.send(
+              "prem-3287@agentmail.to",
+              {
+                to: email,
+                subject: subject.trim(),
+                text: body.trim(),
+                html: `<p>${body.trim()}</p>`,
+              }
+            );
+
+
+          // ==================================================
+          // AGENTMAIL ACCEPTED THE MESSAGE
+          // ==================================================
+
+          console.log(
+            `AgentMail response for ${email}:`,
+            result
+          );
+
+
+          // If AgentMail API call completes without throwing
+          // an error, consider the email successfully accepted.
+
           successfulEmails.push(email);
+
 
           console.log(
             `Mail sent successfully to: ${email}`
           );
+
 
         } catch (error) {
 
@@ -306,8 +365,13 @@ app.post(
             error.message
           );
 
+
+          // Store failed recipient
+
           failedEmails.push(email);
+
         }
+
       }
 
 
@@ -331,6 +395,7 @@ app.post(
       ) {
 
         campaignStatus = "Partial";
+
       }
 
 
@@ -338,19 +403,28 @@ app.post(
       // SAVE EMAIL HISTORY
       // --------------------------------------------------
 
-      const emailHistory = new Email({
-        subject: subject.trim(),
+      const emailHistory =
+        new Email({
 
-        body: body.trim(),
+          subject:
+            subject.trim(),
 
-        recipients: uniqueRecipients,
+          body:
+            body.trim(),
 
-        successfulEmails,
+          recipients:
+            uniqueRecipients,
 
-        failedEmails,
+          successfulEmails:
+            successfulEmails,
 
-        status: campaignStatus,
-      });
+          failedEmails:
+            failedEmails,
+
+          status:
+            campaignStatus,
+
+        });
 
 
       await emailHistory.save();
@@ -369,9 +443,11 @@ app.post(
             ? "Mail sending completed with some failures"
             : "Mail sent successfully",
 
-        successfulEmails,
+        successfulEmails:
+          successfulEmails,
 
-        failedEmails,
+        failedEmails:
+          failedEmails,
 
         successCount:
           successfulEmails.length,
@@ -379,7 +455,9 @@ app.post(
         failedCount:
           failedEmails.length,
 
-        status: campaignStatus,
+        status:
+          campaignStatus,
+
       });
 
 
@@ -398,8 +476,11 @@ app.post(
         message:
           error.message ||
           "Failed to send mail",
+
       });
+
     }
+
   }
 );
 
@@ -418,16 +499,21 @@ app.get(
 
       await connectDB();
 
-      const emails = await Email
-        .find()
-        .sort({
-          createdAt: -1,
-        });
+
+      const emails =
+        await Email
+          .find()
+          .sort({
+            createdAt: -1,
+          });
 
 
       return res.status(200).json({
+
         success: true,
+
         emails,
+
       });
 
 
@@ -440,10 +526,16 @@ app.get(
 
 
       return res.status(500).json({
+
         success: false,
-        message: "Failed to load email history",
+
+        message:
+          "Failed to load email history",
+
       });
+
     }
+
   }
 );
 
@@ -462,19 +554,29 @@ app.delete(
 
       await connectDB();
 
-      const { id } = req.params;
+
+      const {
+        id,
+      } = req.params;
 
 
       // --------------------------------------------------
       // CHECK MONGODB ID
       // --------------------------------------------------
 
-      if (!mongoose.Types.ObjectId.isValid(id)) {
+      if (
+        !mongoose.Types.ObjectId.isValid(id)
+      ) {
 
         return res.status(400).json({
+
           success: false,
-          message: "Invalid email history ID",
+
+          message:
+            "Invalid email history ID",
+
         });
+
       }
 
 
@@ -499,9 +601,14 @@ app.delete(
       if (!deletedEmail) {
 
         return res.status(404).json({
+
           success: false,
-          message: "Email history not found",
+
+          message:
+            "Email history not found",
+
         });
+
       }
 
 
@@ -522,7 +629,9 @@ app.delete(
         message:
           "Email history deleted successfully",
 
-        id: deletedEmail._id,
+        id:
+          deletedEmail._id,
+
       });
 
 
@@ -540,8 +649,11 @@ app.delete(
 
         message:
           "Failed to delete email history",
+
       });
+
     }
+
   }
 );
 
@@ -560,9 +672,14 @@ app.use(
 
 
     res.status(500).json({
+
       success: false,
-      message: "Internal server error",
+
+      message:
+        "Internal server error",
+
     });
+
   }
 );
 
@@ -604,7 +721,9 @@ async function startServer() {
     console.error(error);
 
     process.exit(1);
+
   }
+
 }
 
 

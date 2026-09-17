@@ -13,7 +13,7 @@ const Mailpage = () => {
   const [successCount, setsuccessCount] = useState(0);
   const [failedCount, setfailedCount] = useState(0);
 
-  // Recipients are maintained here
+  // Recipients
   const [recipientsText, setRecipientsText] = useState("");
 
   // Uploaded file name
@@ -22,6 +22,7 @@ const Mailpage = () => {
   // --------------------------------------------------
   // RECIPIENT LIST
   // --------------------------------------------------
+
   const recipients = recipientsText
     .split(/[,\n]/)
     .map((email) => email.trim())
@@ -33,6 +34,7 @@ const Mailpage = () => {
   // --------------------------------------------------
   // FIELD CHANGE
   // --------------------------------------------------
+
   const handleFieldChange = (e) => {
     handlechange(e);
   };
@@ -40,10 +42,11 @@ const Mailpage = () => {
   // --------------------------------------------------
   // RECIPIENT CHANGE
   // --------------------------------------------------
+
   const handleRecipientsChange = (value) => {
     setRecipientsText(value);
 
-    // New campaign -> reset previous delivery report
+    // Reset previous delivery report
     setsuccessCount(0);
     setfailedCount(0);
   };
@@ -52,6 +55,7 @@ const Mailpage = () => {
   // EXCEL FILE
   // Column A = Email
   // --------------------------------------------------
+
   function handleFile(event) {
     const file = event.target.files[0];
 
@@ -61,7 +65,7 @@ const Mailpage = () => {
 
     setSelectedFileName(file.name);
 
-    // New campaign -> reset previous report
+    // Reset previous delivery report
     setsuccessCount(0);
     setfailedCount(0);
 
@@ -138,10 +142,11 @@ const Mailpage = () => {
   // --------------------------------------------------
   // SEND MAIL
   // --------------------------------------------------
+
   const handlesubmit = async (e) => {
     e.preventDefault();
 
-    // Reset old report when sending new campaign
+    // Reset old report
     setsuccessCount(0);
     setfailedCount(0);
 
@@ -203,6 +208,7 @@ const Mailpage = () => {
       // ------------------------------------------------
       // GET ACTUAL COUNTS FROM BACKEND
       // ------------------------------------------------
+
       let successful = 0;
       let failed = 0;
 
@@ -244,6 +250,7 @@ const Mailpage = () => {
       // ------------------------------------------------
       // SUCCESS RESPONSE
       // ------------------------------------------------
+
       if (response.data?.success) {
         // If backend only returns success=true,
         // assume all recipients succeeded.
@@ -272,9 +279,7 @@ const Mailpage = () => {
           );
         }
 
-        // ------------------------------------------------
-        // RESET COMPOSE FORM
-        // ------------------------------------------------
+        // Reset compose form
         setmaildata((prev) => ({
           ...prev,
           subject: "",
@@ -291,6 +296,7 @@ const Mailpage = () => {
       // ------------------------------------------------
       // BACKEND FAILURE
       // ------------------------------------------------
+
       else {
         setsuccessCount(0);
         setfailedCount(
@@ -308,8 +314,7 @@ const Mailpage = () => {
         error
       );
 
-      // Complete failure:
-      // all recipients failed
+      // Complete failure
       setsuccessCount(0);
       setfailedCount(
         uniqueRecipients.length
@@ -326,19 +331,20 @@ const Mailpage = () => {
   };
 
   // --------------------------------------------------
-  // REMOVE EXCEL / RECIPIENT FILE
+  // REMOVE FILE
   // --------------------------------------------------
+
   const removeFile = () => {
     setSelectedFileName("");
 
-    // Remove all recipients loaded from file.
-    // Since the Excel emails are merged into the
-    // textarea, the user can also manually edit them.
+    // Excel emails are merged into the textarea,
+    // so existing recipients remain editable there.
   };
 
   // --------------------------------------------------
   // CLEAR COMPOSE
   // --------------------------------------------------
+
   const clearCompose = () => {
     setmaildata((prev) => ({
       ...prev,
@@ -357,45 +363,136 @@ const Mailpage = () => {
   };
 
   return (
-    <section className="min-h-screen bg-gray-50 px-4 py-8 sm:px-6 lg:px-8">
+    <section className="min-h-screen bg-slate-950 px-4 py-8 sm:px-6 lg:px-8">
+
       <div className="mx-auto max-w-6xl">
 
-        {/* HEADER */}
+        {/* ==================================================
+            PAGE HEADER
+        ================================================== */}
+
         <div className="mb-8">
-          <div className="flex items-center gap-3">
-            
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+
             <div>
-              <h2 className="font-display text-4xl sm:text-5xl text-gray-900">
+
+              {/* LABEL */}
+
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5">
+
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+
+                  <svg
+                    className="h-3 w-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.8}
+                      d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L8 18l-4 1 1-4L16.5 3.5z"
+                    />
+                  </svg>
+
+                </span>
+
+                <span className="text-xs font-semibold text-indigo-300">
+                  Campaign Studio
+                </span>
+
+              </div>
+
+              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
                 Compose Email
               </h2>
 
-              <p className="mt-1 text-sm text-gray-500">
-                Create and send an email campaign to multiple recipients.
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">
+                Create and send an email campaign to multiple
+                recipients.
               </p>
+
+            </div>
+
+
+            {/* RECIPIENT COUNT */}
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 px-5 py-3 shadow-xl">
+
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                Recipients
+              </p>
+
+              <p className="mt-1 text-xl font-bold text-white">
+                {uniqueRecipients.length}
+              </p>
+
             </div>
 
           </div>
+
         </div>
 
-        {/* MAIN */}
+
+        {/* ==================================================
+            MAIN CONTENT
+        ================================================== */}
+
         <div className="grid gap-6 lg:grid-cols-3">
 
           {/* ==================================================
-              FORM
+              COMPOSE FORM
           ================================================== */}
+
           <div className="lg:col-span-2">
 
-            <div className="rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
 
-              <div className="border-b border-gray-100 px-6 py-5">
-                <h3 className="text-sm font-semibold text-gray-900">
-                  Email Details
-                </h3>
+              {/* CARD HEADER */}
 
-                <p className="mt-1 text-xs text-gray-500">
-                  Enter the message and recipients for your campaign.
-                </p>
+              <div className="border-b border-slate-800 bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-5">
+
+                <div className="flex items-center gap-3">
+
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400">
+
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M3 8l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"
+                      />
+                    </svg>
+
+                  </div>
+
+                  <div>
+
+                    <h3 className="text-sm font-semibold text-white">
+                      Email Details
+                    </h3>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      Enter the message and recipients for your
+                      campaign.
+                    </p>
+
+                  </div>
+
+                </div>
+
               </div>
+
+
+              {/* FORM */}
 
               <div className="p-6">
 
@@ -404,9 +501,13 @@ const Mailpage = () => {
                   className="space-y-6"
                 >
 
-                  {/* SUBJECT */}
+                  {/* ==================================================
+                      SUBJECT
+                  ================================================== */}
+
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
+
+                    <label className="mb-2 block text-sm font-medium text-slate-300">
                       Subject
                     </label>
 
@@ -418,19 +519,25 @@ const Mailpage = () => {
                       }
                       onChange={handleFieldChange}
                       placeholder="Enter email subject"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                      className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-slate-600 hover:border-slate-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                     />
+
                   </div>
 
-                  {/* MESSAGE */}
+
+                  {/* ==================================================
+                      MESSAGE
+                  ================================================== */}
+
                   <div>
+
                     <div className="mb-2 flex items-center justify-between">
 
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-slate-300">
                         Message
                       </label>
 
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-slate-600">
                         Email content
                       </span>
 
@@ -444,15 +551,29 @@ const Mailpage = () => {
                       onChange={handleFieldChange}
                       placeholder="Write your email message here..."
                       rows="7"
-                      className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3.5 py-3 text-sm leading-6 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                      className="w-full resize-y rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm leading-6 text-white outline-none transition-all placeholder:text-slate-600 hover:border-slate-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                     />
+
                   </div>
 
-                  {/* RECIPIENTS */}
+
+                  {/* ==================================================
+                      RECIPIENTS
+                  ================================================== */}
+
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Recipients
-                    </label>
+
+                    <div className="mb-2 flex items-center justify-between">
+
+                      <label className="block text-sm font-medium text-slate-300">
+                        Recipients
+                      </label>
+
+                      <span className="rounded-full bg-indigo-500/10 px-2.5 py-1 text-[10px] font-semibold text-indigo-400">
+                        {uniqueRecipients.length} detected
+                      </span>
+
+                    </div>
 
                     <textarea
                       value={recipientsText}
@@ -461,18 +582,37 @@ const Mailpage = () => {
                           e.target.value
                         )
                       }
-                      rows={4}
-                      className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3.5 py-3 text-sm font-mono leading-6 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                      rows={5}
+                      className="w-full resize-y rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm font-mono leading-6 text-white outline-none transition-all placeholder:text-slate-600 hover:border-slate-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10"
                       placeholder={
                         "alice@example.com\nbob@example.com"
                       }
                     />
 
+
+                    {/* ==================================================
+                        UPLOAD EXCEL
+                    ================================================== */}
+
                     <div className="mt-3 flex flex-wrap items-center gap-3">
 
-                      <label className="inline-flex cursor-pointer items-center rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 transition hover:border-slate-500 hover:text-slate-900">
+                      <label className="group inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-300 transition-all hover:border-indigo-500/50 hover:bg-indigo-500/10 hover:text-indigo-300">
 
-                        Upload File
+                        <svg
+                          className="h-4 w-4 text-slate-500 transition-colors group-hover:text-indigo-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.8}
+                            d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"
+                          />
+                        </svg>
+
+                        Upload Excel
 
                         <input
                           type="file"
@@ -483,55 +623,116 @@ const Mailpage = () => {
 
                       </label>
 
-                      {selectedFileName && (
-                        <div className="flex items-center gap-2">
 
-                          <span className="text-xs text-gray-500">
-                            {selectedFileName} added
+                      {/* SELECTED FILE */}
+
+                      {selectedFileName && (
+
+                        <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
+
+                          <svg
+                            className="h-4 w-4 text-emerald-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.8}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+
+                          <span className="max-w-[180px] truncate text-xs text-emerald-400">
+                            {selectedFileName}
                           </span>
 
                           <button
                             type="button"
                             onClick={removeFile}
-                            className="text-xs font-medium text-red-600 hover:text-red-700"
+                            className="ml-1 text-xs font-semibold text-red-400 transition hover:text-red-300"
                           >
                             Remove
                           </button>
 
                         </div>
+
                       )}
 
                     </div>
 
-                    <p className="mt-2 text-xs text-gray-500">
+
+                    <p className="mt-3 text-xs text-slate-600">
+
                       {uniqueRecipients.length} recipient
                       {uniqueRecipients.length === 1
                         ? ""
                         : "s"}{" "}
                       detected
-                      <span className="text-gray-300">
+
+                      <span className="text-slate-700">
                         {" "}
                         · one per line or comma-separated
                       </span>
+
                     </p>
+
                   </div>
 
-                  {/* SEND */}
-                  <div className="border-t border-gray-100 pt-5">
+
+                  {/* ==================================================
+                      BUTTONS
+                  ================================================== */}
+
+                  <div className="flex flex-col gap-3 border-t border-slate-800 pt-5 sm:flex-row">
+
+                    {/* CLEAR */}
+
+                    <button
+                      type="button"
+                      onClick={clearCompose}
+                      disabled={status}
+                      className="flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm font-semibold text-slate-400 transition-all hover:border-slate-600 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-1/3"
+                    >
+
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.8}
+                          d="M3 6h18M8 6V4h8v2m-9 0v14a2 2 0 002 2h6a2 2 0 002-2V6M10 11v6M14 11v6"
+                        />
+                      </svg>
+
+                      Clear
+
+                    </button>
+
+
+                    {/* SEND */}
 
                     <button
                       type="submit"
                       disabled={status}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all duration-200 hover:from-indigo-400 hover:to-purple-500 hover:shadow-indigo-500/30 disabled:cursor-not-allowed disabled:opacity-50"
                     >
 
                       {status ? (
+
                         <>
+
                           <svg
                             className="h-4 w-4 animate-spin"
                             fill="none"
                             viewBox="0 0 24 24"
                           >
+
                             <circle
                               className="opacity-25"
                               cx="12"
@@ -546,12 +747,17 @@ const Mailpage = () => {
                               fill="currentColor"
                               d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                             />
+
                           </svg>
 
                           Sending email...
+
                         </>
+
                       ) : (
+
                         <>
+
                           <svg
                             className="h-4 w-4"
                             fill="none"
@@ -567,7 +773,9 @@ const Mailpage = () => {
                           </svg>
 
                           Send Email
+
                         </>
+
                       )}
 
                     </button>
@@ -575,43 +783,79 @@ const Mailpage = () => {
                   </div>
 
                 </form>
+
               </div>
+
             </div>
+
           </div>
 
+
           {/* ==================================================
-              SIDEBAR
+              SIDEBAR - DELIVERY REPORT ONLY
           ================================================== */}
-          <div className="space-y-4">
 
-            {/* DELIVERY REPORT */}
-            <div className="rounded-xl border border-gray-200 bg-white">
+          <div>
 
-              <div className="border-b border-gray-100 px-5 py-4">
+            <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl">
 
-                <h3 className="text-sm font-semibold text-gray-900">
-                  Delivery Report
-                </h3>
+              {/* REPORT HEADER */}
 
-                <p className="mt-1 text-xs text-gray-500">
-                  Current campaign
-                </p>
+              <div className="border-b border-slate-800 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-4">
+
+                <div className="flex items-center justify-between">
+
+                  <div>
+
+                    <h3 className="text-sm font-semibold text-white">
+                      Delivery Report
+                    </h3>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      Current campaign
+                    </p>
+
+                  </div>
+
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400">
+
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"
+                      />
+                    </svg>
+
+                  </div>
+
+                </div>
 
               </div>
+
+
+              {/* REPORT CONTENT */}
 
               <div className="space-y-3 p-5">
 
                 {/* SUCCESS */}
-                <div className="rounded-lg border border-gray-200 p-4">
+
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
 
                   <div className="flex items-center justify-between">
 
                     <div className="flex items-center gap-3">
 
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10">
 
                         <svg
-                          className="h-4 w-4 text-emerald-600"
+                          className="h-4 w-4 text-emerald-400"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -626,30 +870,33 @@ const Mailpage = () => {
 
                       </div>
 
-                      <span className="text-sm font-medium text-gray-700">
+                      <span className="text-sm font-medium text-slate-300">
                         Successful
                       </span>
 
                     </div>
 
-                    <span className="text-2xl font-semibold text-gray-900">
+                    <span className="text-2xl font-bold text-emerald-400">
                       {successCount}
                     </span>
 
                   </div>
+
                 </div>
 
+
                 {/* FAILED */}
-                <div className="rounded-lg border border-gray-200 p-4">
+
+                <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
 
                   <div className="flex items-center justify-between">
 
                     <div className="flex items-center gap-3">
 
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-50">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-500/10">
 
                         <svg
-                          className="h-4 w-4 text-red-600"
+                          className="h-4 w-4 text-red-400"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -664,70 +911,30 @@ const Mailpage = () => {
 
                       </div>
 
-                      <span className="text-sm font-medium text-gray-700">
+                      <span className="text-sm font-medium text-slate-300">
                         Failed
                       </span>
 
                     </div>
 
-                    <span className="text-2xl font-semibold text-gray-900">
+                    <span className="text-2xl font-bold text-red-400">
                       {failedCount}
                     </span>
 
                   </div>
+
                 </div>
 
               </div>
-            </div>
-
-            {/* CAMPAIGN SUMMARY */}
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-
-              <h3 className="text-sm font-semibold text-gray-900">
-                Campaign Summary
-              </h3>
-
-              <div className="mt-4 space-y-3">
-
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">
-                    Recipients
-                  </span>
-
-                  <span className="text-sm font-medium text-gray-900">
-                    {uniqueRecipients.length}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">
-                    Subject
-                  </span>
-
-                  <span className="max-w-[180px] truncate text-sm font-medium text-gray-900">
-                    {maildata?.subject || "-"}
-                  </span>
-                </div>
-
-              </div>
-            </div>
-
-            {/* QUICK TIP */}
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
-
-              <p className="text-xs font-semibold text-gray-700">
-                Quick tip
-              </p>
-
-              <p className="mt-1 text-xs leading-5 text-gray-500">
-                You can enter emails manually or upload an Excel file. Excel emails are read from column A.
-              </p>
 
             </div>
 
           </div>
+
         </div>
+
       </div>
+
     </section>
   );
 };

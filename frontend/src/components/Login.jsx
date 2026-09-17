@@ -35,136 +35,294 @@ const Login = ({ onLogin }) => {
   };
 
   return (
-    <section className="min-h-screen bg-gray-50 px-4 py-8 flex items-center justify-center">
+    <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-8">
 
-      <div className="w-full max-w-md">
+      {/* =====================================================
+          BACKGROUND DECORATION
+      ====================================================== */}
 
-        {/* Login Card */}
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
 
-          {/* Header */}
-          <div className="border-b border-gray-100 px-8 pb-7 pt-8">
+        {/* Indigo glow */}
 
-            {/* Logo */}
-            <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 text-white">
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.8}
-                  d="M3 8l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"
-                />
-              </svg>
+        <div className="absolute left-1/2 top-[-180px] h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-indigo-600/20 blur-[120px]" />
+
+        {/* Purple glow */}
+
+        <div className="absolute bottom-[-180px] right-[-100px] h-[400px] w-[400px] rounded-full bg-purple-600/10 blur-[120px]" />
+
+        {/* Grid */}
+
+        <div
+          className="absolute inset-0 opacity-[0.035]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+
+      </div>
+
+
+      {/* =====================================================
+          LOGIN CONTAINER
+      ====================================================== */}
+
+      <div className="relative z-10 w-full max-w-md">
+
+        {/* =================================================
+            BRAND
+        ================================================== */}
+
+        <div className="mb-7 text-center">
+
+          {/* Logo */}
+
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-violet-600 text-white shadow-xl shadow-indigo-500/20">
+
+            <svg
+              className="h-7 w-7"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.7}
+                d="M3 8l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"
+              />
+            </svg>
+
+          </div>
+
+          <h1 className="text-xl font-bold tracking-tight text-white">
+            Post a Letter
+          </h1>
+
+          <p className="mt-1 text-xs font-medium text-slate-500">
+            Campaign Studio
+          </p>
+
+        </div>
+
+
+        {/* =================================================
+            LOGIN CARD
+        ================================================== */}
+
+        <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 shadow-2xl shadow-black/40">
+
+          {/* =================================================
+              CARD HEADER
+          ================================================== */}
+
+          <div className="border-b border-slate-800 px-7 pb-7 pt-7 sm:px-8">
+
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5">
+
+              <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 shadow-lg shadow-indigo-400/50" />
+
+              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-300">
+                Secure Login
+              </span>
+
             </div>
 
-            <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
+            <h2 className="text-2xl font-bold tracking-tight text-white">
               Welcome back
-            </h1>
+            </h2>
 
-            <p className="mt-2 text-sm leading-6 text-gray-500">
+            <p className="mt-2 text-sm leading-6 text-slate-400">
               Sign in to manage your email campaigns.
             </p>
 
           </div>
 
-          {/* Form */}
-          <div className="px-8 py-8">
 
-            <form onSubmit={handlesubmit} className="space-y-5">
+          {/* =================================================
+              FORM
+          ================================================== */}
 
-              {/* Email */}
+          <div className="px-7 py-7 sm:px-8">
+
+            <form
+              onSubmit={handlesubmit}
+              className="space-y-5"
+            >
+
+              {/* =================================================
+                  EMAIL
+              ================================================== */}
+
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
+
+                <label className="mb-2 block text-sm font-semibold text-slate-300">
                   Email address
                 </label>
 
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setemail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-gray-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-                  required
-                />
+                <div className="relative">
+
+                  <div className="pointer-events-none absolute left-3.5 top-1/2 flex -translate-y-1/2 items-center text-slate-600">
+
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M3 8l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"
+                      />
+                    </svg>
+
+                  </div>
+
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) =>
+                      setemail(e.target.value)
+                    }
+                    placeholder="you@example.com"
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950 py-3 pl-10 pr-4 text-sm text-white outline-none transition-all placeholder:text-slate-600 hover:border-slate-600 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                    required
+                  />
+
+                </div>
+
               </div>
 
-              {/* Password */}
+
+              {/* =================================================
+                  PASSWORD
+              ================================================== */}
+
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
+
+                <label className="mb-2 block text-sm font-semibold text-slate-300">
                   Password
                 </label>
 
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setpassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-gray-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-                  required
-                />
+                <div className="relative">
+
+                  <div className="pointer-events-none absolute left-3.5 top-1/2 flex -translate-y-1/2 items-center text-slate-600">
+
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M7 10V8a5 5 0 0110 0v2M6 10h12a2 2 0 012 2v7a2 2 0 01-2 2H6a2 2 0 01-2-2v-7a2 2 0 012-2z"
+                      />
+                    </svg>
+
+                  </div>
+
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) =>
+                      setpassword(e.target.value)
+                    }
+                    placeholder="Enter your password"
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950 py-3 pl-10 pr-4 text-sm text-white outline-none transition-all placeholder:text-slate-600 hover:border-slate-600 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                    required
+                  />
+
+                </div>
+
               </div>
 
-              {/* Error */}
+
+              {/* =================================================
+                  ERROR
+              ================================================== */}
+
               {error && (
-                <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-3.5 py-3">
 
-                  <svg
-                    className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v4m0 4h.01M10.29 3.86l-8.82 15A2 2 0 003.2 22h17.6a2 2 0 001.73-3.14l-8.82-15a2 2 0 00-3.42 0z"
-                    />
-                  </svg>
+                <div className="flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3">
 
-                  <p className="text-sm text-red-700">
+                  <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500/10">
+
+                    <svg
+                      className="h-3.5 w-3.5 text-red-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v4m0 4h.01M10.29 3.86l-8.82 15A2 2 0 003.2 22h17.6a2 2 0 001.73-3.14l-8.82-15a2 2 0 00-3.42 0z"
+                      />
+                    </svg>
+
+                  </div>
+
+                  <p className="text-sm leading-5 text-red-300">
                     {error}
                   </p>
 
                 </div>
+
               )}
 
-              {/* Options */}
+
+              {/* =================================================
+                  OPTIONS
+              ================================================== */}
+
               <div className="flex items-center justify-between">
 
                 <label className="flex cursor-pointer items-center gap-2">
+
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900"
+                    className="h-4 w-4 rounded border-slate-700 bg-slate-950 text-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
                   />
 
-                  <span className="text-sm text-gray-600">
+                  <span className="text-xs font-medium text-slate-500">
                     Remember me
                   </span>
+
                 </label>
+
 
                 <button
                   type="button"
-                  className="text-sm font-medium text-gray-700 transition hover:text-gray-900"
+                  className="text-xs font-semibold text-indigo-400 transition hover:text-indigo-300"
                 >
                   Forgot password?
                 </button>
 
               </div>
 
-              {/* Submit */}
+
+              {/* =================================================
+                  SUBMIT
+              ================================================== */}
+
               <button
                 type="submit"
                 disabled={status}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-indigo-500/30 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
               >
+
                 {status ? (
+
                   <>
+
                     <svg
                       className="h-4 w-4 animate-spin"
                       fill="none"
@@ -184,16 +342,21 @@ const Login = ({ onLogin }) => {
                         fill="currentColor"
                         d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                       />
+
                     </svg>
 
                     Signing in...
+
                   </>
+
                 ) : (
+
                   <>
+
                     Sign in
 
                     <svg
-                      className="h-4 w-4"
+                      className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -205,52 +368,74 @@ const Login = ({ onLogin }) => {
                         d="M13 5l7 7-7 7M20 12H4"
                       />
                     </svg>
+
                   </>
+
                 )}
+
               </button>
 
             </form>
+
           </div>
 
-          {/* Footer */}
-          <div className="border-t border-gray-100 bg-gray-50 px-8 py-5 text-center">
-            <p className="text-sm text-gray-500">
+
+          {/* =================================================
+              FOOTER
+          ================================================== */}
+
+          <div className="border-t border-slate-800 bg-slate-950/50 px-7 py-5 text-center sm:px-8">
+
+            <p className="text-xs text-slate-500">
+
               Don't have an account?
+
               <button
                 type="button"
-                className="ml-1 font-medium text-gray-900 hover:underline"
+                className="ml-1 font-semibold text-indigo-400 transition hover:text-indigo-300 hover:underline"
               >
                 Contact Administrator
               </button>
+
             </p>
+
           </div>
 
         </div>
 
-        {/* Security */}
-        <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-400">
 
-          <svg
-            className="h-3.5 w-3.5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.8}
-              d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4z"
-            />
-          </svg>
+        {/* =================================================
+            SECURITY
+        ================================================== */}
 
-          <span>
+        <div className="mt-6 flex items-center justify-center gap-2">
+
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg border border-emerald-500/10 bg-emerald-500/5">
+
+            <svg
+              className="h-3.5 w-3.5 text-emerald-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.8}
+                d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4z"
+              />
+            </svg>
+
+          </div>
+
+          <span className="text-[11px] font-medium text-slate-600">
             Secure and encrypted connection
           </span>
 
         </div>
 
       </div>
+
     </section>
   );
 };
