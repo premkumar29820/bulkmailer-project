@@ -363,25 +363,9 @@ const Mailpage = () => {
         {/* HEADER */}
         <div className="mb-8">
           <div className="flex items-center gap-3">
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-white">
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.8}
-                  d="M3 8l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"
-                />
-              </svg>
-            </div>
-
+            
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight text-gray-900">
+              <h2 className="font-display text-4xl sm:text-5xl text-gray-900">
                 Compose Email
               </h2>
 
