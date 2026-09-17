@@ -1,33 +1,82 @@
-require("dotenv").config();   //load .env file variable into node.js apllication like use port mail,pass with process.env.PORT
+// ======================================================
+// LOAD ENVIRONMENT VARIABLES
+// ======================================================
 
-const dns = require("dns");  //import dns module for resolve domain name to IP address
-dns.setServers(["8.8.8.8","8.8.4.4", "1.1.1.1"]);   //for set google dns connection because sometime error in mongodb connection with dns
+require("dotenv").config();
+
+
+// ======================================================
+// DNS CONFIGURATION
+// ======================================================
+
+const dns = require("dns");
+
+dns.setServers([
+  "8.8.8.8",
+  "8.8.4.4",
+  "1.1.1.1",
+]);
+
+
+// ======================================================
+// IMPORT PACKAGES
+// ======================================================
 
 const express = require("express");
-const cors = require("cors");   //it only allow the already required port 
+const cors = require("cors");
 const mongoose = require("mongoose");
 const nodemailer = require("nodemailer");
-const jwt = require("jsonwebtoken");   //jwt for login authentication jwt token create/verify
+const jwt = require("jsonwebtoken");
 
 const Email = require("./models/Email");
 
+
+// ======================================================
+// CREATE EXPRESS APP
+// ======================================================
+
 const app = express();
 
-app.use(cors());
+
+// ======================================================
+// MIDDLEWARE
+// ======================================================
+
+app.use(
+  cors({
+    origin: true,
+    methods: ["GET", "POST", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 app.use(express.json());
 
-const transporter = nodemailer.createTransport({  //create email sending configuration
-  service: "gmail",   //use gmail service
-  auth: {         //gmail authentication start
-    user: process.env.EMAIL_USER,     //get user from env
-    pass: process.env.EMAIL_PASS
-  }
-})
+
+// ======================================================
+// SMTP / GMAIL CONFIGURATION
+// ======================================================
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+
+// ======================================================
+// MONGODB CONNECTION
+// ======================================================
 
 let isMongoConnected = false;
 
 async function connectDB() {
-  if (isMongoConnected) return;
+  if (isMongoConnected && mongoose.connection.readyState === 1) {
+    return;
+  }
 
   await mongoose.connect(process.env.MONGO_URI);
 
@@ -36,213 +85,517 @@ async function connectDB() {
   console.log("MongoDB connected successfully");
 }
 
-const authMiddleware = (req, res, next) => { //its for proptected route security middleware it check user login or not   
-  const authHeader = req.headers.authorization; //get authorization from frontend    like authorization:`bearer ${token}
-  const token = authHeader?.split(" ")[1];   //split like Bearer abc123  [1]->abc123 its a jwt token
+
+// ======================================================
+// JWT AUTHENTICATION MIDDLEWARE
+// ======================================================
+
+const authMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  const token = authHeader?.split(" ")[1];
 
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: "Unauthorized"
+      message: "Unauthorized",
     });
   }
 
   try {
-    const decoded = jwt.verify(   //try to verify that token
+    const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET  //this is in jwt create in env
-    )
+      process.env.JWT_SECRET
+    );
 
-    req.user = decoded;   //store user information in req object
-    next();   //if token valid it allow to next route eg:/sendmail
+    req.user = decoded;
+
+    next();
+
   } catch (error) {
-    return res.status(401).json({   //for invalid
+    return res.status(401).json({
       success: false,
-      message: "Invalid or expired token"
+      message: "Invalid or expired token",
     });
   }
 };
 
-app.get("/", (req, res) => {   //home route this route executed in browser open
+
+// ======================================================
+// HOME / HEALTH CHECK
+// ======================================================
+
+app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "Bulk Mail Backend Running"
+    message: "Bulk Mail Backend Running",
   });
 });
+
+
+// ======================================================
+// LOGIN
+// ======================================================
 
 app.post("/login", (req, res) => {
-  const { email, password } = req.body;
-  console.log("Frontend mail:",email)
-  console.log("frontend password:",password)
-  console.log("ENV  emAil",process.env.ADMIN_EMAIL)
-  console.log("Env password:",process.env.ADMIN_PASSWORD)
+  try {
+    const { email, password } = req.body;
 
-  if (
-    email === process.env.ADMIN_EMAIL &&   //check the user login with mail & pass
-    password === process.env.ADMIN_PASSWORD
-  ) {
-    const token = jwt.sign(   //create jwt token
-      { email },   //first store mail
-      process.env.JWT_SECRET,  //use jwt secret in env
-      { expiresIn: "2h" }   //set time limit for token
-    );
+    // Do NOT log passwords in production
 
-    return res.json({   //send token for frontend
-      success: true,
-      token
+    if (
+      email === process.env.ADMIN_EMAIL &&
+      password === process.env.ADMIN_PASSWORD
+    ) {
+      const token = jwt.sign(
+        {
+          email,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "2h",
+        }
+      );
+
+      return res.status(200).json({
+        success: true,
+        token,
+      });
+    }
+
+    return res.status(401).json({
+      success: false,
+      message: "Invalid email or password",
+    });
+
+  } catch (error) {
+    console.error("Login error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Login failed",
     });
   }
-
-  res.status(401).json({   //if mail or pass is wrong it return 401 error
-    success: false,
-    message: "Invalid email or password"
-  });
 });
 
-// app.post("/sendmail", authMiddleware, async (req, res) => {   //sendmail is protected route first run authmiddleware if its correct then execute mail sending code
-//   const { subject, body, recipients } = req.body;
 
-//   if (
-//     !subject ||
-//     !body ||
-//     !Array.isArray(recipients) ||
-//     recipients.length === 0
-//   ) {
-//     return res.status(400).json({
-//       success: false,
-//       message: "Subject, body and recipients are required"
-//     })
-//   }
+// ======================================================
+// SEND MAIL
+// POST /sendmail
+// ======================================================
 
-//   try {
-//     await connectDB()
-//     await transporter.sendMail({   //send mail by nodemailer
-//       from: process.env.EMAIL_USER,
-//       to: recipients,
-//       subject: subject,
-//       text: body
-//     })
+app.post(
+  "/sendmail",
+  authMiddleware,
+  async (req, res) => {
 
-//     await Email.create({   //if mail send successfully it will store in mongodb
-//       subject: subject,
-//       body: body,
-//       recipients: recipients,
-//       status: "success"   //sentAt time automatically create by mongodb
-//     })
-
-//     res.json({
-//       success: true,
-//       message: "Mail sent successfully"   //success msg for frontend
-//     })
-//   } catch (error) {
-//     console.log("Email sending error:", error);
-
-//     try {
-//       await Email.create({
-//         subject: subject,
-//         body: body,
-//         recipients: recipients,
-//         status: "failed"   //try to save failed mail attempt in mongodb
-//       });
-//     } catch (dbError) {   //server error for frontend
-//       console.log("Database save error:", dbError);
-//     }
-
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to send mail"    //for frontend alert
-//     })
-//   }
-// })
-app.post("/sendmail", authMiddleware, async (req, res) => {   //sendmail is protected route first run authmiddleware if its correct then execute mail sending code 
-  const { subject, body, recipients } = req.body; 
- 
-  if ( 
-    !subject || 
-    !body || 
-    !Array.isArray(recipients) || 
-    recipients.length === 0 
-  ) { 
-    return res.status(400).json({ 
-      success: false, 
-      message: "Subject, body and recipients are required" 
-    }) 
-  } 
- 
-  try { 
-    await connectDB() 
-    await transporter.sendMail({   //send mail by nodemailer 
-      from: process.env.EMAIL_USER, 
-      to: recipients, 
-      subject: subject, 
-      text: body 
-    }) 
- 
-    await Email.create({   //if mail send successfully it will store in mongodb 
-      subject: subject, 
-      body: body, 
-      recipients: recipients, 
-      status: "success"   //sentAt time automatically create by mongodb 
-    }) 
- 
-    return res.status(200).json({ 
-      success: true, 
-      message: "Mail sent successfully"   //success msg for frontend 
-    }) 
-  } catch (error) { 
-    console.log("Email sending error:", error); 
-
-    return res.status(500).json({ 
-      success: false, 
-      message: "Failed to send mail"    //for frontend alert 
-    }) 
-  } 
-})
-
-app.get("/emails", authMiddleware, async (req, res) => {   //history fetch api
-    
     try {
-    await connectDB()
-    const emails = await Email.find().sort({   //fetch all mail records in mongodb
-      sentAt: -1    //means latest mail-> old mail
-    })
 
-    res.json({
-      success: true,
-      emails: emails     //history sent to frontend
-    });
-  } catch (error) {
-    console.log("History fetch error:", error)
+      await connectDB();
+
+      const {
+        subject,
+        body,
+        recipients,
+      } = req.body;
+
+
+      // --------------------------------------------------
+      // VALIDATE SUBJECT
+      // --------------------------------------------------
+
+      if (!subject?.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: "Subject is required",
+        });
+      }
+
+
+      // --------------------------------------------------
+      // VALIDATE MESSAGE
+      // --------------------------------------------------
+
+      if (!body?.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: "Message is required",
+        });
+      }
+
+
+      // --------------------------------------------------
+      // VALIDATE RECIPIENTS
+      // --------------------------------------------------
+
+      if (
+        !Array.isArray(recipients) ||
+        recipients.length === 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Recipients are required",
+        });
+      }
+
+
+      // --------------------------------------------------
+      // REMOVE DUPLICATE EMAILS
+      // --------------------------------------------------
+
+      const uniqueRecipients = [
+        ...new Set(
+          recipients
+            .map((email) => String(email).trim())
+            .filter(Boolean)
+        ),
+      ];
+
+
+      if (uniqueRecipients.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "No valid recipients found",
+        });
+      }
+
+
+      // --------------------------------------------------
+      // TRACK SUCCESS / FAILURE
+      // --------------------------------------------------
+
+      const successfulEmails = [];
+
+      const failedEmails = [];
+
+
+      // --------------------------------------------------
+      // SEND EMAILS ONE BY ONE
+      // --------------------------------------------------
+
+      for (const email of uniqueRecipients) {
+
+        try {
+
+          await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: subject.trim(),
+            text: body.trim(),
+          });
+
+
+          successfulEmails.push(email);
+
+          console.log(
+            `Mail sent successfully to: ${email}`
+          );
+
+        } catch (error) {
+
+          console.error(
+            `Failed to send to ${email}:`,
+            error.message
+          );
+
+          failedEmails.push(email);
+        }
+      }
+
+
+      // --------------------------------------------------
+      // DETERMINE CAMPAIGN STATUS
+      // --------------------------------------------------
+
+      let campaignStatus = "Failed";
+
+
+      if (
+        successfulEmails.length > 0 &&
+        failedEmails.length === 0
+      ) {
+
+        campaignStatus = "Success";
+
+      } else if (
+        successfulEmails.length > 0 &&
+        failedEmails.length > 0
+      ) {
+
+        campaignStatus = "Partial";
+      }
+
+
+      // --------------------------------------------------
+      // SAVE EMAIL HISTORY
+      // --------------------------------------------------
+
+      const emailHistory = new Email({
+        subject: subject.trim(),
+
+        body: body.trim(),
+
+        recipients: uniqueRecipients,
+
+        successfulEmails,
+
+        failedEmails,
+
+        status: campaignStatus,
+      });
+
+
+      await emailHistory.save();
+
+
+      // --------------------------------------------------
+      // RESPONSE
+      // --------------------------------------------------
+
+      return res.status(200).json({
+
+        success: true,
+
+        message:
+          failedEmails.length > 0
+            ? "Mail sending completed with some failures"
+            : "Mail sent successfully",
+
+        successfulEmails,
+
+        failedEmails,
+
+        successCount:
+          successfulEmails.length,
+
+        failedCount:
+          failedEmails.length,
+
+        status: campaignStatus,
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "Send mail error:",
+        error
+      );
+
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          error.message ||
+          "Failed to send mail",
+      });
+    }
+  }
+);
+
+
+// ======================================================
+// GET EMAIL HISTORY
+// GET /emails
+// ======================================================
+
+app.get(
+  "/emails",
+  authMiddleware,
+  async (req, res) => {
+
+    try {
+
+      await connectDB();
+
+      const emails = await Email
+        .find()
+        .sort({
+          createdAt: -1,
+        });
+
+
+      return res.status(200).json({
+        success: true,
+        emails,
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "Get email history error:",
+        error
+      );
+
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to load email history",
+      });
+    }
+  }
+);
+
+
+// ======================================================
+// DELETE INDIVIDUAL EMAIL HISTORY
+// DELETE /emails/:id
+// ======================================================
+
+app.delete(
+  "/emails/:id",
+  authMiddleware,
+  async (req, res) => {
+
+    try {
+
+      await connectDB();
+
+      const { id } = req.params;
+
+
+      // --------------------------------------------------
+      // CHECK MONGODB ID
+      // --------------------------------------------------
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+
+        return res.status(400).json({
+          success: false,
+          message: "Invalid email history ID",
+        });
+      }
+
+
+      console.log(
+        "Delete request received:",
+        id
+      );
+
+
+      // --------------------------------------------------
+      // DELETE RECORD
+      // --------------------------------------------------
+
+      const deletedEmail =
+        await Email.findByIdAndDelete(id);
+
+
+      // --------------------------------------------------
+      // NOT FOUND
+      // --------------------------------------------------
+
+      if (!deletedEmail) {
+
+        return res.status(404).json({
+          success: false,
+          message: "Email history not found",
+        });
+      }
+
+
+      console.log(
+        "Email history deleted:",
+        deletedEmail._id
+      );
+
+
+      // --------------------------------------------------
+      // SUCCESS
+      // --------------------------------------------------
+
+      return res.status(200).json({
+
+        success: true,
+
+        message:
+          "Email history deleted successfully",
+
+        id: deletedEmail._id,
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "Delete history error:",
+        error
+      );
+
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          "Failed to delete email history",
+      });
+    }
+  }
+);
+
+
+// ======================================================
+// GLOBAL ERROR HANDLER
+// ======================================================
+
+app.use(
+  (err, req, res, next) => {
+
+    console.error(
+      "Unhandled error:",
+      err
+    );
 
     res.status(500).json({
       success: false,
-      message: "Failed to fetch email history"
+      message: "Internal server error",
     });
   }
-});
+);
 
-// mongoose
-//   .connect(process.env.MONGO_URI)
-//   .then(() => {
-//     console.log("MongoDB connected successfully");
 
-//     app.listen(process.env.PORT || 3000, () => {
-//       console.log(
-//         `Server running on port ${process.env.PORT || 3000}`
-//       );
-//     });
-//   })
-//   .catch((error) => {
-//     console.log("MongoDB connection failed")
-//     console.log(error)
-//   });
+// ======================================================
+// START SERVER
+// ======================================================
 
-// if (require.main === module) {
-//   app.listen(process.env.PORT || 3000, () => {
-//     console.log(
-//       `Server running on port ${process.env.PORT || 3000}`
-//     );
-//   });
-// }
+const PORT =
+  process.env.PORT || 3000;
 
-module.exports = app;
+
+async function startServer() {
+
+  try {
+
+    await connectDB();
+
+
+    app.listen(
+      PORT,
+      "0.0.0.0",
+      () => {
+
+        console.log(
+          `Server running on port ${PORT}`
+        );
+
+      }
+    );
+
+  } catch (error) {
+
+    console.error(
+      "MongoDB connection failed:"
+    );
+
+    console.error(error);
+
+    process.exit(1);
+  }
+}
+
+
+startServer(); 
